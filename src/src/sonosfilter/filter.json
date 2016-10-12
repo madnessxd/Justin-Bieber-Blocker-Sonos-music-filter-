@@ -1,8 +1,10 @@
 {
     "filters": [
-        {"Artist": "Justin Bieber"} ,
-        {"Artist": "Adele"} ,
-        {"Artist": "Rihanna"}
+        {"Artist": "Justin Bieber"},
+        {"Artist": "Adele"},
+        {"Artist": "Rihanna"},
+        {"Artist": "Sia"}
     ],
-    "ip" : "192.168.177.113"
+    "ip" : "192.168.177.113",
+    "volume": 15
 }

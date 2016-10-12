@@ -15,10 +15,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JTextField;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,6 +34,7 @@ public class SonosFilter {
     public static void main(String[] args) {
         SonosFilter sf = new SonosFilter();
     }
+    
     SonosFilter(){
         ip = getIp();
         
@@ -44,11 +43,10 @@ public class SonosFilter {
             public void run(){
                 while(true){
                     try {    
-                        playSonos();
                         checkSonos();
                         Thread.sleep(5000);
                     } catch (Exception ex) {
-                        
+                        JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "SonosFilter Crashed. Please restart."));
                     }
                 }
             }
@@ -60,7 +58,7 @@ public class SonosFilter {
     
     private void pauseSonos(){
         try {
-            URLConnection connection = new URL("http://" + ip +":1400" + "/MediaRenderer/AVTransport/Control").openConnection();
+            URLConnection connection = new URL("http://" + ip + ":1400" + "/MediaRenderer/AVTransport/Control").openConnection();
             connection.setRequestProperty("Connection", "close");
             connection.setRequestProperty("SOAPACTION", "\"urn:schemas-upnp-org:service:AVTransport:1#Pause\"");
 
@@ -99,7 +97,7 @@ public class SonosFilter {
             String result = buf.toString();
             System.out.println(result);
         } catch (Exception e) {
-
+            
         }
     }
     
@@ -148,8 +146,56 @@ public class SonosFilter {
         }
     }
     
+    private void setVolume(int volume){
+        try {
+            URLConnection connection = new URL("http://" + ip + ":1400" + "/MediaRenderer/RenderingControl/Control").openConnection();
+            connection.setRequestProperty("Connection", "close");
+            connection.setRequestProperty("SOAPACTION", "urn:schemas-upnp-org:service:RenderingControl:1#SetVolume");
+
+            connection.setDoInput(true);
+            connection.setDoOutput(true);
+            connection.setConnectTimeout( 20000 );  // long timeout, but not infinite
+            connection.setReadTimeout( 20000 );
+            connection.setUseCaches (false);
+            connection.setDefaultUseCaches (false);
+
+            connection.setRequestProperty ( "Content-Type", "text/xml" );
+
+            try (OutputStreamWriter writer = new OutputStreamWriter( connection.getOutputStream() )) {
+                writer.write( "<s:Envelope \n" +
+                                "	xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"\n" +
+                                "	s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"\n" +
+                                "	>\n" +
+                                "  <s:Body>\n" +
+                                "    <u:SetVolume xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">\n" +
+                                "      <InstanceID>0</InstanceID>\n" +
+                                "      <Channel>Master</Channel>\n" +
+                                "      <DesiredVolume>" + volume + "</DesiredVolume>\n" +
+                                "    </u:SetVolume>\n" +
+                                "  </s:Body>\n" +
+                                "</s:Envelope>" );
+
+                writer.flush();
+            }
+
+            InputStreamReader reader = new InputStreamReader( connection.getInputStream() );
+            StringBuilder buf = new StringBuilder();
+            char[] cbuf = new char[ 2048 ];
+            int num;
+            while ( -1 != (num=reader.read( cbuf )))
+            {
+                buf.append( cbuf, 0, num );
+            }
+
+            String result = buf.toString();
+            System.out.println(result);
+        } catch (Exception e) {
+
+        }
+    }
+    
     private void checkSonos(){
-    try {
+        try {
             URLConnection connection = new URL("http://" + ip + ":1400" + "/MediaRenderer/AVTransport/Control").openConnection();
             connection.setRequestProperty("Connection", "close");
             connection.setRequestProperty("SOAPACTION", "urn:schemas-upnp-org:service:AVTransport:1#GetPositionInfo");
@@ -192,7 +238,9 @@ public class SonosFilter {
             System.out.println(result);
             
             if(checkFilter(result.toLowerCase())){
-                pauseSonos();
+                setVolume(0);
+            } else {
+                setVolume(getVolume());
             }
         } catch (Exception e) {
 
@@ -209,7 +257,7 @@ public class SonosFilter {
                 }
             }
         } catch (JSONException ex) {
-            Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing \"filters\"."));
         }
         return false;
     }
@@ -222,15 +270,30 @@ public class SonosFilter {
             JOptionPane.showMessageDialog(null, new JLabel("ip: " + j));
             return j;
         } catch (JSONException ex) {
-            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is empty/corrupted."));
+            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing \"ip\"."));
             Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
         }
         return "";
     }
+        
+    private int getVolume(){
+        try {
+            JSONObject filters = getFilters();
+            int j = filters.getInt("volume");
+            System.out.println("volume: " + j);
+            return j;
+        } catch (JSONException ex) {
+            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing \"volume\"."));
+            Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 15;
+    }
     
     private JSONObject getFilters(){
         try {
+            //BufferedReader br = new BufferedReader(new FileReader("C:\\filter.json"));
             BufferedReader br = new BufferedReader(new FileReader("filter.json"));
+            
             StringBuilder sb = new StringBuilder();
             String line = br.readLine();
             while (line != null) {
@@ -242,6 +305,7 @@ public class SonosFilter {
             JSONObject filters = new JSONObject(result);
             return filters;
         } catch (JSONException ex) {
+            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is broken for some reason."));
             Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
         } catch (FileNotFoundException ex) {
             JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing."));
