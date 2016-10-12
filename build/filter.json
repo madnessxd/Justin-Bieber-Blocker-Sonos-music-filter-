@@ -3,8 +3,10 @@
         {"Artist": "Justin Bieber"},
         {"Artist": "Adele"},
         {"Artist": "Rihanna"},
-        {"Artist": "Sia"}
+        {"Artist": "Shawn Mendes"},
+        {"Artist": "538"},
+        {"Artist": "Bruno Mars"}
     ],
-    "ip" : "192.168.177.113",
+    "ips" : ["192.168.177.112", "192.168.177.113"],
     "volume": 15
 }

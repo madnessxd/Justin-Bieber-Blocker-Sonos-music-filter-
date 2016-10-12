@@ -11,15 +11,24 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 /**
  *
@@ -29,14 +38,15 @@ public class SonosFilter {
     /**
      * @param args the command line arguments
      */
-    String ip = "localhost";
+    //String ip = "localhost";
+    List<String> ips = new ArrayList<>();
     
     public static void main(String[] args) {
         SonosFilter sf = new SonosFilter();
     }
     
     SonosFilter(){
-        ip = getIp();
+        getIp();
         
         Thread thread = (new Thread(){
             @Override
@@ -52,200 +62,245 @@ public class SonosFilter {
             }
         });
         thread.start();
-        //pauseSonos();
-        //playSonos();
     }
     
     private void pauseSonos(){
         try {
-            URLConnection connection = new URL("http://" + ip + ":1400" + "/MediaRenderer/AVTransport/Control").openConnection();
-            connection.setRequestProperty("Connection", "close");
-            connection.setRequestProperty("SOAPACTION", "\"urn:schemas-upnp-org:service:AVTransport:1#Pause\"");
+            for(String ip: ips){
+                URLConnection connection = new URL("http://" + ip + ":1400" + "/MediaRenderer/AVTransport/Control").openConnection();
+                connection.setRequestProperty("Connection", "close");
+                connection.setRequestProperty("SOAPACTION", "\"urn:schemas-upnp-org:service:AVTransport:1#Pause\"");
 
-            connection.setDoInput(true);
-            connection.setDoOutput(true);
-            connection.setConnectTimeout( 20000 );  // long timeout, but not infinite
-            connection.setReadTimeout( 20000 );
-            connection.setUseCaches (false);
-            connection.setDefaultUseCaches (false);
+                connection.setDoInput(true);
+                connection.setDoOutput(true);
+                connection.setConnectTimeout( 2000 );  // long timeout, but not infinite
+                connection.setReadTimeout( 2000 );
+                connection.setUseCaches (false);
+                connection.setDefaultUseCaches (false);
 
-            connection.setRequestProperty ( "Content-Type", "text/xml" );
+                connection.setRequestProperty ( "Content-Type", "text/xml" );
 
-            OutputStreamWriter writer = new OutputStreamWriter( connection.getOutputStream() );
+                OutputStreamWriter writer = new OutputStreamWriter( connection.getOutputStream() );
 
-            writer.write( "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">\n" +
-                            "	<s:Body>\n" +
-                            "		<u:Pause xmlns:u=\"urn:schemas-upnp-org:service:AVTransport:1\">\n" +
-                            "			<InstanceID>0</InstanceID>\n" +
-                            "			<Speed>1</Speed>\n" +
-                            "		</u:Pause>\n" +
-                            "	</s:Body>\n" +
-                            "</s:Envelope>" );
+                writer.write( "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">\n" +
+                                "	<s:Body>\n" +
+                                "		<u:Pause xmlns:u=\"urn:schemas-upnp-org:service:AVTransport:1\">\n" +
+                                "			<InstanceID>0</InstanceID>\n" +
+                                "			<Speed>1</Speed>\n" +
+                                "		</u:Pause>\n" +
+                                "	</s:Body>\n" +
+                                "</s:Envelope>" );
 
-            writer.flush();
-            writer.close();
+                writer.flush();
+                writer.close();
 
-            InputStreamReader reader = new InputStreamReader( connection.getInputStream() );
-            StringBuilder buf = new StringBuilder();
-            char[] cbuf = new char[ 2048 ];
-            int num;
-            while ( -1 != (num=reader.read( cbuf )))
-            {
-                buf.append( cbuf, 0, num );
+                InputStreamReader reader = new InputStreamReader( connection.getInputStream() );
+                StringBuilder buf = new StringBuilder();
+                char[] cbuf = new char[ 2048 ];
+                int num;
+                while ( -1 != (num=reader.read( cbuf )))
+                {
+                    buf.append( cbuf, 0, num );
+                }
+
+                String result = buf.toString();
+                //System.out.println(result);
             }
-
-            String result = buf.toString();
-            System.out.println(result);
         } catch (Exception e) {
             
         }
     }
     
     private void playSonos(){
-        try {
-            URLConnection connection = new URL("http://" + ip +":1400" + "/MediaRenderer/AVTransport/Control").openConnection();
-            connection.setRequestProperty("Connection", "close");
-            connection.setRequestProperty("SOAPACTION", "\"urn:schemas-upnp-org:service:AVTransport:1#Play\"");
+        for(String ip: ips){
+            try {
+                URLConnection connection = new URL("http://" + ip +":1400" + "/MediaRenderer/AVTransport/Control").openConnection();
+                connection.setRequestProperty("Connection", "close");
+                connection.setRequestProperty("SOAPACTION", "\"urn:schemas-upnp-org:service:AVTransport:1#Play\"");
 
-            connection.setDoInput(true);
-            connection.setDoOutput(true);
-            connection.setConnectTimeout( 20000 );  // long timeout, but not infinite
-            connection.setReadTimeout( 20000 );
-            connection.setUseCaches (false);
-            connection.setDefaultUseCaches (false);
+                connection.setDoInput(true);
+                connection.setDoOutput(true);
+                connection.setConnectTimeout( 2000 );  // long timeout, but not infinite
+                connection.setReadTimeout( 2000 );
+                connection.setUseCaches (false);
+                connection.setDefaultUseCaches (false);
 
-            connection.setRequestProperty ( "Content-Type", "text/xml" );
+                connection.setRequestProperty ( "Content-Type", "text/xml" );
 
-            OutputStreamWriter writer = new OutputStreamWriter( connection.getOutputStream() );
+                OutputStreamWriter writer = new OutputStreamWriter( connection.getOutputStream() );
 
-            writer.write( "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">\n" +
-                            "	<s:Body>\n" +
-                            "		<u:Play xmlns:u=\"urn:schemas-upnp-org:service:AVTransport:1\">\n" +
-                            "			<InstanceID>0</InstanceID>\n" +
-                            "			<Speed>1</Speed>\n" +
-                            "		</u:Play>\n" +
-                            "	</s:Body>\n" +
-                            "</s:Envelope>" );
+                writer.write( "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">\n" +
+                                "	<s:Body>\n" +
+                                "		<u:Play xmlns:u=\"urn:schemas-upnp-org:service:AVTransport:1\">\n" +
+                                "			<InstanceID>0</InstanceID>\n" +
+                                "			<Speed>1</Speed>\n" +
+                                "		</u:Play>\n" +
+                                "	</s:Body>\n" +
+                                "</s:Envelope>" );
 
-            writer.flush();
-            writer.close();
+                writer.flush();
+                writer.close();
 
-            InputStreamReader reader = new InputStreamReader( connection.getInputStream() );
-            StringBuilder buf = new StringBuilder();
-            char[] cbuf = new char[ 2048 ];
-            int num;
-            while ( -1 != (num=reader.read( cbuf )))
-            {
-                buf.append( cbuf, 0, num );
+                InputStreamReader reader = new InputStreamReader( connection.getInputStream() );
+                StringBuilder buf = new StringBuilder();
+                char[] cbuf = new char[ 2048 ];
+                int num;
+                while ( -1 != (num=reader.read( cbuf )))
+                {
+                    buf.append( cbuf, 0, num );
+                }
+
+                String result = buf.toString();
+                //System.out.println(result);
+            } catch (Exception e) {
+
             }
-
-            String result = buf.toString();
-            System.out.println(result);
-        } catch (Exception e) {
-
         }
     }
     
     private void setVolume(int volume){
-        try {
-            URLConnection connection = new URL("http://" + ip + ":1400" + "/MediaRenderer/RenderingControl/Control").openConnection();
-            connection.setRequestProperty("Connection", "close");
-            connection.setRequestProperty("SOAPACTION", "urn:schemas-upnp-org:service:RenderingControl:1#SetVolume");
+        for(String ip: ips){
+            try {
+                URLConnection connection = new URL("http://" + ip + ":1400" + "/MediaRenderer/RenderingControl/Control").openConnection();
+                connection.setRequestProperty("Connection", "close");
+                connection.setRequestProperty("SOAPACTION", "urn:schemas-upnp-org:service:RenderingControl:1#SetVolume");
 
-            connection.setDoInput(true);
-            connection.setDoOutput(true);
-            connection.setConnectTimeout( 20000 );  // long timeout, but not infinite
-            connection.setReadTimeout( 20000 );
-            connection.setUseCaches (false);
-            connection.setDefaultUseCaches (false);
+                connection.setDoInput(true);
+                connection.setDoOutput(true);
+                connection.setConnectTimeout( 2000 );  // long timeout, but not infinite
+                connection.setReadTimeout( 2000 );
+                connection.setUseCaches (false);
+                connection.setDefaultUseCaches (false);
 
-            connection.setRequestProperty ( "Content-Type", "text/xml" );
+                connection.setRequestProperty ( "Content-Type", "text/xml" );
 
-            try (OutputStreamWriter writer = new OutputStreamWriter( connection.getOutputStream() )) {
-                writer.write( "<s:Envelope \n" +
-                                "	xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"\n" +
-                                "	s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"\n" +
-                                "	>\n" +
-                                "  <s:Body>\n" +
-                                "    <u:SetVolume xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">\n" +
-                                "      <InstanceID>0</InstanceID>\n" +
-                                "      <Channel>Master</Channel>\n" +
-                                "      <DesiredVolume>" + volume + "</DesiredVolume>\n" +
-                                "    </u:SetVolume>\n" +
-                                "  </s:Body>\n" +
-                                "</s:Envelope>" );
+                try (OutputStreamWriter writer = new OutputStreamWriter( connection.getOutputStream() )) {
+                    writer.write( "<s:Envelope \n" +
+                                    "	xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"\n" +
+                                    "	s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"\n" +
+                                    "	>\n" +
+                                    "  <s:Body>\n" +
+                                    "    <u:SetVolume xmlns:u=\"urn:schemas-upnp-org:service:RenderingControl:1\">\n" +
+                                    "      <InstanceID>0</InstanceID>\n" +
+                                    "      <Channel>Master</Channel>\n" +
+                                    "      <DesiredVolume>" + volume + "</DesiredVolume>\n" +
+                                    "    </u:SetVolume>\n" +
+                                    "  </s:Body>\n" +
+                                    "</s:Envelope>" );
 
-                writer.flush();
+                    writer.flush();
+                }
+
+                InputStreamReader reader = new InputStreamReader( connection.getInputStream() );
+                StringBuilder buf = new StringBuilder();
+                char[] cbuf = new char[ 2048 ];
+                int num;
+                while ( -1 != (num=reader.read( cbuf )))
+                {
+                    buf.append( cbuf, 0, num );
+                }
+
+                String result = buf.toString();
+                //System.out.println(result);
+            } catch (Exception e) {
+
             }
-
-            InputStreamReader reader = new InputStreamReader( connection.getInputStream() );
-            StringBuilder buf = new StringBuilder();
-            char[] cbuf = new char[ 2048 ];
-            int num;
-            while ( -1 != (num=reader.read( cbuf )))
-            {
-                buf.append( cbuf, 0, num );
-            }
-
-            String result = buf.toString();
-            System.out.println(result);
-        } catch (Exception e) {
-
         }
     }
     
     private void checkSonos(){
-        try {
-            URLConnection connection = new URL("http://" + ip + ":1400" + "/MediaRenderer/AVTransport/Control").openConnection();
-            connection.setRequestProperty("Connection", "close");
-            connection.setRequestProperty("SOAPACTION", "urn:schemas-upnp-org:service:AVTransport:1#GetPositionInfo");
+        for(String ip: ips){
+            try {
+                URLConnection connection = new URL("http://" + ip + ":1400" + "/MediaRenderer/AVTransport/Control").openConnection();
+                connection.setRequestProperty("Connection", "close");
+                connection.setRequestProperty("SOAPACTION", "urn:schemas-upnp-org:service:AVTransport:1#GetPositionInfo");
 
-            connection.setDoInput(true);
-            connection.setDoOutput(true);
-            connection.setConnectTimeout( 20000 );  // long timeout, but not infinite
-            connection.setReadTimeout( 20000 );
-            connection.setUseCaches (false);
-            connection.setDefaultUseCaches (false);
+                connection.setDoInput(true);
+                connection.setDoOutput(true);
+                connection.setConnectTimeout(2000);  // long timeout, but not infinite
+                connection.setReadTimeout(2000);
+                connection.setUseCaches (false);
+                connection.setDefaultUseCaches (false);
 
-            connection.setRequestProperty ( "Content-Type", "text/xml" );
+                connection.setRequestProperty ( "Content-Type", "text/xml" );
 
-            try (OutputStreamWriter writer = new OutputStreamWriter( connection.getOutputStream() )) {
-                writer.write( "<s:Envelope \n" +
-                        "	xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"\n" +
-                        "	s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"\n" +
-                        "	>\n" +
-                        "  <s:Body>\n" +
-                        "    <u:GetPositionInfo xmlns:u=\"urn:schemas-upnp-org:service:AVTransport:1\">\n" +
-                        "      <InstanceID>0</InstanceID>\n" +
-                        "    </u:GetPositionInfo>\n" +
-                        "  </s:Body>\n" +
-                        "</s:Envelope>\n" +
-                        "<!--MediaRenderer/AVTransport/Control-->" );
+                try (OutputStreamWriter writer = new OutputStreamWriter( connection.getOutputStream() )) {
+                    writer.write( "<s:Envelope \n" +
+                            "	xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"\n" +
+                            "	s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"\n" +
+                            "	>\n" +
+                            "  <s:Body>\n" +
+                            "    <u:GetPositionInfo xmlns:u=\"urn:schemas-upnp-org:service:AVTransport:1\">\n" +
+                            "      <InstanceID>0</InstanceID>\n" +
+                            "    </u:GetPositionInfo>\n" +
+                            "  </s:Body>\n" +
+                            "</s:Envelope>\n" +
+                            "<!--MediaRenderer/AVTransport/Control-->" );
 
-                writer.flush();
+                    writer.flush();
+                }
+
+                InputStreamReader reader = new InputStreamReader( connection.getInputStream() );
+                StringBuilder buf = new StringBuilder();
+                char[] cbuf = new char[ 2048 ];
+                int num;
+                while ( -1 != (num=reader.read( cbuf )))
+                {
+                    buf.append( cbuf, 0, num );
+                }
+
+                String result = buf.toString();
+                //System.out.println(result);
+                try{
+                    Document document = loadXMLFromString(result);
+                    Element rootElement = document.getDocumentElement();
+
+                    //System.out.println(getString("TrackMetaData", rootElement));
+                    
+                    if(!equals(getString("TrackMetaData", rootElement).equals("NOT_IMPLEMENTED"))){
+                        Document document2 = loadXMLFromString(getString("TrackMetaData", rootElement));
+                        Element rootElement2 = document2.getDocumentElement();
+
+                        System.out.println("---");
+                        System.out.println(getString("r:streamContent", rootElement2));
+                        System.out.println(getString("res", rootElement2));
+                        System.out.println(getString("title", rootElement2));
+                        System.out.println("---");
+                    }
+                } catch(Exception e){
+                }
+                
+                if(checkFilter(result.toLowerCase())){
+                    setVolume(0);
+                } else {
+                    setVolume(getVolume());
+                }
+            } catch (Exception e) {
+                System.err.println("Can't connect to " + ip);
             }
-
-            InputStreamReader reader = new InputStreamReader( connection.getInputStream() );
-            StringBuilder buf = new StringBuilder();
-            char[] cbuf = new char[ 2048 ];
-            int num;
-            while ( -1 != (num=reader.read( cbuf )))
-            {
-                buf.append( cbuf, 0, num );
-            }
-
-            String result = buf.toString();
-            System.out.println(result);
-            
-            if(checkFilter(result.toLowerCase())){
-                setVolume(0);
-            } else {
-                setVolume(getVolume());
-            }
-        } catch (Exception e) {
-
         }
     }
+    
+    protected String getString(String tagName, Element element) {
+        NodeList list = element.getElementsByTagName(tagName);
+        if (list != null && list.getLength() > 0) {
+            NodeList subList = list.item(0).getChildNodes();
+
+            if (subList != null && subList.getLength() > 0) {
+                return subList.item(0).getNodeValue();
+            }
+        }
+
+        return null;
+    }
+    
+    public static Document loadXMLFromString(String xml) throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        InputSource is = new InputSource(new StringReader(xml));
+        return builder.parse(is);
+    }
+    
     private Boolean checkFilter(String input){
         try {
             JSONObject filters = getFilters();
@@ -253,6 +308,7 @@ public class SonosFilter {
             for(int i = 0; i < j.length(); i++){
                 String filterString = j.getJSONObject(i).getString("Artist");
                 if(input.contains(filterString.toLowerCase())){
+                    System.out.println("Found " + filterString);
                     return true; 
                 }
             }
@@ -262,18 +318,23 @@ public class SonosFilter {
         return false;
     }
     
-    private String getIp(){
+    private void getIp(){
         try {
             JSONObject filters = getFilters();
-            String j = filters.getString("ip");
+            JSONArray j = filters.getJSONArray("ips");
+            
+            //System.out.println(j.toString());
+            //System.out.println(j.length());
+            for(int i = 0; i < j.length();i++){
+                ips.add(j.getString(i));
+            }
             System.out.println("ip: " + j);
-            JOptionPane.showMessageDialog(null, new JLabel("ip: " + j));
-            return j;
+            JOptionPane.showMessageDialog(null, new JLabel("ips: " + j));   
+            //return j;
         } catch (JSONException ex) {
-            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing \"ip\"."));
+            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing \"ips\"."));
             Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return "";
     }
         
     private int getVolume(){
@@ -291,8 +352,8 @@ public class SonosFilter {
     
     private JSONObject getFilters(){
         try {
-            //BufferedReader br = new BufferedReader(new FileReader("C:\\filter.json"));
-            BufferedReader br = new BufferedReader(new FileReader("filter.json"));
+            BufferedReader br = new BufferedReader(new FileReader("C:\\filter.json"));
+            //BufferedReader br = new BufferedReader(new FileReader("filter.json"));
             
             StringBuilder sb = new StringBuilder();
             String line = br.readLine();
