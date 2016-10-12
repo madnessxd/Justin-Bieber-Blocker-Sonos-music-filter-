@@ -1,0 +1,8 @@
+{
+    "filters": [
+        {"Artist": "Justin Bieber"} ,
+        {"Artist": "Adele"} ,
+        {"Artist": "Rihanna"}
+    ],
+    "ip" : "192.168.177.113"
+}
