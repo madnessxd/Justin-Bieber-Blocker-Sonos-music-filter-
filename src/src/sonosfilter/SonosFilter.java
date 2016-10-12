@@ -40,6 +40,8 @@ public class SonosFilter {
      */
     //String ip = "localhost";
     List<String> ips = new ArrayList<>();
+    int blockedCount = 0;
+    int loudCount = 0;
     
     public static void main(String[] args) {
         SonosFilter sf = new SonosFilter();
@@ -270,10 +272,26 @@ public class SonosFilter {
                 } catch(Exception e){
                 }
                 
-                if(checkFilter(result.toLowerCase())){
-                    setVolume(0);
+                if(checkLouder(result.toLowerCase())){
+                    setVolume(getLoudVolume());
+                    loudCount = 4;
                 } else {
-                    setVolume(getVolume());
+                    loudCount--;
+                    if(loudCount <= 0){
+                        loudCount = 0;
+                        setVolume(getVolume());
+                        
+                        if(checkFilter(result.toLowerCase())){
+                            setVolume(0);
+                            blockedCount = 4;
+                        } else {
+                            blockedCount--;
+                            if(blockedCount <= 0){
+                                blockedCount = 0;
+                                setVolume(getVolume());
+                            }
+                        }
+                    }
                 }
             } catch (Exception e) {
                 System.err.println("Can't connect to " + ip);
@@ -305,6 +323,23 @@ public class SonosFilter {
         try {
             JSONObject filters = getFilters();
             JSONArray j = filters.getJSONArray("filters");
+            for(int i = 0; i < j.length(); i++){
+                String filterString = j.getJSONObject(i).getString("Artist");
+                if(input.contains(filterString.toLowerCase())){
+                    System.out.println("Found " + filterString);
+                    return true; 
+                }
+            }
+        } catch (JSONException ex) {
+            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing \"filters\"."));
+        }
+        return false;
+    }
+    
+    private Boolean checkLouder(String input){
+        try {
+            JSONObject filters = getFilters();
+            JSONArray j = filters.getJSONArray("louder");
             for(int i = 0; i < j.length(); i++){
                 String filterString = j.getJSONObject(i).getString("Artist");
                 if(input.contains(filterString.toLowerCase())){
@@ -350,10 +385,23 @@ public class SonosFilter {
         return 15;
     }
     
+    private int getLoudVolume(){
+        try {
+            JSONObject filters = getFilters();
+            int j = filters.getInt("loudVolume");
+            System.out.println("loudVolume: " + j);
+            return j;
+        } catch (JSONException ex) {
+            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing \"volume\"."));
+            Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 15;
+    }
+    
     private JSONObject getFilters(){
         try {
-            BufferedReader br = new BufferedReader(new FileReader("C:\\filter.json"));
-            //BufferedReader br = new BufferedReader(new FileReader("filter.json"));
+            //BufferedReader br = new BufferedReader(new FileReader("C:\\filter.json"));
+            BufferedReader br = new BufferedReader(new FileReader("filter.json"));
             
             StringBuilder sb = new StringBuilder();
             String line = br.readLine();

@@ -7,6 +7,16 @@
         {"Artist": "538"},
         {"Artist": "Bruno Mars"}
     ],
+    "louder": [
+        {"Artist": "PPAP"},
+        {"Artist": "Rebecca Black"},
+        {"Artist": "Rick Astley"},
+        {"Artist": "Lil Jon"},
+		{"Artist": "Darude"},
+		{"Artist": "Ying Tang Twins"},
+		{"Artist": "Pitbull"}
+    ],
     "ips" : ["192.168.177.112", "192.168.177.113"],
-    "volume": 15
+    "volume": 15,
+	"loudVolume": 35
 }
