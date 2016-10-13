@@ -3,20 +3,13 @@
         {"Artist": "Justin Bieber"},
         {"Artist": "Adele"},
         {"Artist": "Rihanna"},
-        {"Artist": "Shawn Mendes"},
-        {"Artist": "538"},
-        {"Artist": "Bruno Mars"}
+        {"Artist": "Sia"}
     ],
     "louder": [
-        {"Artist": "PPAP"},
+        {"Artist": "pikotaro"},
         {"Artist": "Rebecca Black"},
-        {"Artist": "Rick Astley"},
-        {"Artist": "Lil Jon"},
-		{"Artist": "Darude"},
-		{"Artist": "Ying Tang Twins"},
-		{"Artist": "Pitbull"}
+        {"Artist": "Rick Astley"}
     ],
     "ips" : ["192.168.177.112", "192.168.177.113"],
-    "volume": 15,
-	"loudVolume": 35
+    "volume": 15
 }

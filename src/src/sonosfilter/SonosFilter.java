@@ -272,7 +272,7 @@ public class SonosFilter {
                 } catch(Exception e){
                 }
                 
-                if(checkLouder(result.toLowerCase())){
+                /*if(checkLouder(result.toLowerCase())){
                     setVolume(getLoudVolume());
                     loudCount = 4;
                 } else {
@@ -292,6 +292,17 @@ public class SonosFilter {
                             }
                         }
                     }
+                }*/
+                int volume = getVolume();
+                if(checkFilter(result.toLowerCase())){
+                    volume = 0;
+                }
+                if(checkLouder(result.toLowerCase())){
+                    volume = getLoudVolume();
+                }
+                setVolume(volume);
+                if(volume != getVolume()){
+                    break;
                 }
             } catch (Exception e) {
                 System.err.println("Can't connect to " + ip);
@@ -336,6 +347,29 @@ public class SonosFilter {
         return false;
     }
     
+    private int getFilterLength(){
+        try {
+            JSONObject filters = getFilters();
+            JSONArray j = filters.getJSONArray("filters");
+            return j.length(); 
+            
+        } catch (JSONException ex) {
+            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing \"filters\"."));
+        }
+        return 0;
+    }
+  
+    private int getLouderLength(){
+        try {
+            JSONObject filters = getFilters();
+            JSONArray j = filters.getJSONArray("louder");
+            return j.length(); 
+        } catch (JSONException ex) {
+            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing \"louder\"."));
+        }
+        return 0;
+    }
+        
     private Boolean checkLouder(String input){
         try {
             JSONObject filters = getFilters();
