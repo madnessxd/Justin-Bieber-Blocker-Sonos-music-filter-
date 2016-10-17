@@ -4,19 +4,39 @@
         {"Artist": "Adele"},
         {"Artist": "Rihanna"},
         {"Artist": "Shawn Mendes"},
-        {"Artist": "538"},
-        {"Artist": "Bruno Mars"}
+        {"Artist": "Bruno Mars"},
+        {"Artist": "Drake"}
     ],
     "louder": [
         {"Artist": "PPAP"},
         {"Artist": "Rebecca Black"},
         {"Artist": "Rick Astley"},
         {"Artist": "Lil Jon"},
+        {"Artist": "Lil' Jon"},
 		{"Artist": "Darude"},
 		{"Artist": "Ying Tang Twins"},
-		{"Artist": "Pitbull"}
+		{"Artist": "New Order"},
+		{"Artist": "Lady Gaga"},
+		{"Artist": "Seinfeld"},
+		{"Artist": "Madonna"},
+		{"Artist": "t.A.T.u."},
+		{"Artist": "Steve Miller"},
+		{"Artist": "Simple Minds"},
+		{"Artist": "Stone Roses"},
+		{"Artist": "Keane"},
+		{"Artist": "Paul Simon"},
+		{"Artist": "Owner Of A Lonely Heart"},
+		{"Artist": "The Police"},
+		{"Artist": "Tears For Fears"},
+		{"Artist": "Talk Talk"},
+		{"Artist": "Soft Cell"},
+		{"Artist": "Marc Almond"},
+		{"Artist": "Joy Division"},
+		{"Artist": "Cure"},
+		{"Artist": "Smiths"}
     ],
     "ips" : ["192.168.177.112", "192.168.177.113"],
-    "volume": 15,
-	"loudVolume": 35
+    "volume": 20,
+	"loudVolume": 30,
+	"pop-ups": false
 }

@@ -15,6 +15,7 @@ import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,12 +43,44 @@ public class SonosFilter {
     List<String> ips = new ArrayList<>();
     int blockedCount = 0;
     int loudCount = 0;
+    Tray tray;
+    
+    String lastError = "";
+    String lastInfo = "";
+    String lastWarning = "";
+    
+    Date lastErrorTime = new Date(0);
     
     public static void main(String[] args) {
         SonosFilter sf = new SonosFilter();
     }
     
+    private void showError(String error){
+        if(lastError != error && lastErrorTime.compareTo(new Date()) < 0 ){
+            System.out.println(lastErrorTime.compareTo(new Date()));
+            tray.showError(error);
+            lastError = error;
+            lastErrorTime.setTime(new Date().getTime() + 30000);
+        }
+    }
+    
+    private void showInfo(String error){
+        if(lastInfo != error){
+            tray.showInfo(error);
+            lastInfo = error;
+        }
+    }
+    
+    private void showWarning(String error){
+        if(lastWarning != error){
+            tray.showWarning(error);
+            lastWarning = error;
+        }
+    }
+    
     SonosFilter(){
+        tray = new Tray(checkPopUps());
+        
         getIp();
         
         Thread thread = (new Thread(){
@@ -57,8 +90,9 @@ public class SonosFilter {
                     try {    
                         checkSonos();
                         Thread.sleep(5000);
+                        tray.setPopUps(checkPopUps());
                     } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "SonosFilter Crashed. Please restart."));
+                        showError("SonosFilter Crashed. Please restart.");
                     }
                 }
             }
@@ -267,6 +301,7 @@ public class SonosFilter {
                         System.out.println(getString("r:streamContent", rootElement2));
                         System.out.println(getString("res", rootElement2));
                         System.out.println(getString("title", rootElement2));
+                        tray.showInfo("Song muted: " + getString("title", rootElement2));
                         System.out.println("---");
                     }
                 } catch(Exception e){
@@ -305,7 +340,7 @@ public class SonosFilter {
                     break;
                 }
             } catch (Exception e) {
-                System.err.println("Can't connect to " + ip);
+                showError("Can't connect to " + ip);
             }
         }
     }
@@ -330,6 +365,17 @@ public class SonosFilter {
         return builder.parse(is);
     }
     
+    private Boolean checkPopUps(){
+        try {
+            JSONObject filters = getFilters();
+            Boolean j = filters.getBoolean("pop-ups");
+            return j; 
+        } catch (JSONException ex) {
+            showError("filter.json is missing \"pop-ups\".");
+        }
+        return false;
+    }
+    
     private Boolean checkFilter(String input){
         try {
             JSONObject filters = getFilters();
@@ -342,7 +388,7 @@ public class SonosFilter {
                 }
             }
         } catch (JSONException ex) {
-            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing \"filters\"."));
+            showError("filter.json is missing \"filters\".");
         }
         return false;
     }
@@ -354,7 +400,7 @@ public class SonosFilter {
             return j.length(); 
             
         } catch (JSONException ex) {
-            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing \"filters\"."));
+            showError("filter.json is missing \"filters\".");
         }
         return 0;
     }
@@ -365,7 +411,7 @@ public class SonosFilter {
             JSONArray j = filters.getJSONArray("louder");
             return j.length(); 
         } catch (JSONException ex) {
-            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing \"louder\"."));
+            showError("filter.json is missing \"louder\".");
         }
         return 0;
     }
@@ -382,7 +428,7 @@ public class SonosFilter {
                 }
             }
         } catch (JSONException ex) {
-            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing \"filters\"."));
+            showError("filter.json is missing \"filters\".");
         }
         return false;
     }
@@ -398,10 +444,10 @@ public class SonosFilter {
                 ips.add(j.getString(i));
             }
             System.out.println("ip: " + j);
-            JOptionPane.showMessageDialog(null, new JLabel("ips: " + j));   
+            showInfo("ips: " + j);   
             //return j;
         } catch (JSONException ex) {
-            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing \"ips\"."));
+            showError("filter.json is missing \"ips\".");
             Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -413,7 +459,7 @@ public class SonosFilter {
             System.out.println("volume: " + j);
             return j;
         } catch (JSONException ex) {
-            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing \"volume\"."));
+            showError("filter.json is missing \"volume\".");
             Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
         }
         return 15;
@@ -426,7 +472,7 @@ public class SonosFilter {
             System.out.println("loudVolume: " + j);
             return j;
         } catch (JSONException ex) {
-            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing \"volume\"."));
+            showError("filter.json is missing \"volume\".");
             Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
         }
         return 15;
@@ -448,13 +494,13 @@ public class SonosFilter {
             JSONObject filters = new JSONObject(result);
             return filters;
         } catch (JSONException ex) {
-            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is broken for some reason."));
+            showError("filter.json is broken for some reason.");
             Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
         } catch (FileNotFoundException ex) {
-            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing."));
+            showError("filter.json is missing.");
             Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(null, new JLabel("Warning: " + "filter.json is missing/corrupted."));
+            showError("filter.json is missing/corrupted.");
             Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
