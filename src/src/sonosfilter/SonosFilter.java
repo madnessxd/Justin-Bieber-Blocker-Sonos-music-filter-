@@ -58,7 +58,7 @@ public class SonosFilter {
     }
     
     private void showError(String error){
-        if(lastError.equals(error) && lastErrorTime.compareTo(new Date()) < 0 ){
+        if(!lastError.equals(error) && lastErrorTime.compareTo(new Date()) < 0 ){
             System.out.println(lastErrorTime.compareTo(new Date()));
             tray.showError(error);
             lastError = error;
@@ -67,14 +67,14 @@ public class SonosFilter {
     }
     
     private void showInfo(String error){
-        if(lastInfo.equals(error)){
+        if(!lastInfo.equals(error)){
             tray.showInfo(error);
             lastInfo = error;
         }
     }
     
     private void showWarning(String error){
-        if(lastWarning.equals(error)){
+        if(!lastWarning.equals(error)){
             tray.showWarning(error);
             lastWarning = error;
         }
