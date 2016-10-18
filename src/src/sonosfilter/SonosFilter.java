@@ -5,13 +5,18 @@
  */
 package sonosfilter;
 
+import java.awt.Desktop;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
+import java.io.Writer;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -19,8 +24,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.json.JSONArray;
@@ -39,7 +42,6 @@ public class SonosFilter {
     /**
      * @param args the command line arguments
      */
-    //String ip = "localhost";
     List<String> ips = new ArrayList<>();
     int blockedCount = 0;
     int loudCount = 0;
@@ -52,7 +54,7 @@ public class SonosFilter {
     Date lastErrorTime = new Date(0);
     
     public static void main(String[] args) {
-        SonosFilter sf = new SonosFilter();
+        new SonosFilter();
     }
     
     private void showError(String error){
@@ -78,9 +80,8 @@ public class SonosFilter {
         }
     }
     
-    SonosFilter(){
-        tray = new Tray(checkPopUps());
-        
+    SonosFilter(){    
+        tray = new Tray(checkPopUps());   
         getIp();
         
         Thread thread = (new Thread(){
@@ -140,7 +141,6 @@ public class SonosFilter {
                 }
 
                 String result = buf.toString();
-                //System.out.println(result);
             }
         } catch (Exception e) {
             
@@ -304,29 +304,9 @@ public class SonosFilter {
                         System.out.println("---");
                     }
                 } catch(Exception e){
+                    
                 }
                 
-                /*if(checkLouder(result.toLowerCase())){
-                    setVolume(getLoudVolume());
-                    loudCount = 4;
-                } else {
-                    loudCount--;
-                    if(loudCount <= 0){
-                        loudCount = 0;
-                        setVolume(getVolume());
-                        
-                        if(checkFilter(result.toLowerCase())){
-                            setVolume(0);
-                            blockedCount = 4;
-                        } else {
-                            blockedCount--;
-                            if(blockedCount <= 0){
-                                blockedCount = 0;
-                                setVolume(getVolume());
-                            }
-                        }
-                    }
-                }*/
                 int volume = getVolume();
                 Document document = loadXMLFromString(result);
                 Element rootElement = document.getDocumentElement();
@@ -335,7 +315,7 @@ public class SonosFilter {
                     if(!equals(getString("TrackMetaData", rootElement).equals("NOT_IMPLEMENTED"))){
                         Document document2 = loadXMLFromString(getString("TrackMetaData", rootElement));
                         Element rootElement2 = document2.getDocumentElement();
-                        showInfo("Song muted: " + getString("title", rootElement2));
+                        showInfo("Song muted: " + getString("r:streamContent", rootElement2));
                     }
                     volume = 0;
                 }
@@ -343,7 +323,7 @@ public class SonosFilter {
                     if(!equals(getString("TrackMetaData", rootElement).equals("NOT_IMPLEMENTED"))){
                         Document document2 = loadXMLFromString(getString("TrackMetaData", rootElement));
                         Element rootElement2 = document2.getDocumentElement();
-                        showInfo("Song made louder: " + getString("title", rootElement2));
+                        showInfo("Song made louder: " + getString("r:streamContent", rootElement2));
                     }
                     
                     volume = getLoudVolume();
@@ -385,8 +365,49 @@ public class SonosFilter {
             return j; 
         } catch (JSONException ex) {
             showError("filter.json is missing \"pop-ups\".");
+        } catch(NullPointerException n){
+            return true;
         }
         return false;
+    }
+    
+    private void createJson(){
+        try {
+            try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("filter.json"), "utf-8"))) {
+                writer.write("{\n" +
+                        "    \"filters\": [\n" +
+                        "        {\"Artist\": \"Justin Bieber\"},\n" +
+                        "        {\"Artist\": \"Adele\"},\n" +
+                        "        {\"Artist\": \"Rihanna\"},\n" +
+                        "        {\"Artist\": \"Shawn Mendes\"},\n" +
+                        "        {\"Artist\": \"Bruno Mars\"},\n" +
+                        "        {\"Artist\": \"Drake\"}\n" +
+                        "    ],\n" +
+                        "    \"louder\": [\n" +
+                        "		{\"Artist\": \"Simple Minds\"},\n" +
+                        "		{\"Artist\": \"Stone Roses\"},\n" +
+                        "		{\"Artist\": \"Joy Division\"},\n" +
+                        "		{\"Artist\": \"Cure\"},\n" +
+                        "		{\"Artist\": \"Smiths\"}\n" +
+                        "    ],\n" +
+                        "    \"ips\" : [\"192.168.1.2\"],\n" +
+                        "    \"volume\": 20,\n" +
+                        "	\"loudVolume\": 30,\n" +
+                        "	\"pop-ups\": true\n" +
+                        "}");
+            } catch (IOException ex) {
+                Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
+                showError("Can't create filters.json");
+            }
+            showInfo("filters.json created. Please restart the program.");
+            Desktop.getDesktop().open(new File("filter.json"));
+            Thread.sleep(15000);
+            System.exit(1);
+        } catch (IOException ex) {
+            Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
     private Boolean checkFilter(String input){
@@ -451,14 +472,11 @@ public class SonosFilter {
             JSONObject filters = getFilters();
             JSONArray j = filters.getJSONArray("ips");
             
-            //System.out.println(j.toString());
-            //System.out.println(j.length());
             for(int i = 0; i < j.length();i++){
                 ips.add(j.getString(i));
             }
             System.out.println("ip: " + j);
             showInfo("ips: " + j);   
-            //return j;
         } catch (JSONException ex) {
             showError("filter.json is missing \"ips\".");
             Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
@@ -507,11 +525,12 @@ public class SonosFilter {
             JSONObject filters = new JSONObject(result);
             return filters;
         } catch (JSONException ex) {
-            showError("filter.json is broken for some reason.");
+            showError("filter.json is broken. It might be empty.");
             Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
         } catch (FileNotFoundException ex) {
             showError("filter.json is missing.");
             Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
+            createJson();
         } catch (IOException ex) {
             showError("filter.json is missing/corrupted.");
             Logger.getLogger(SonosFilter.class.getName()).log(Level.SEVERE, null, ex);
