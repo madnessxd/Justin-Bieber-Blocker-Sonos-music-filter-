@@ -301,7 +301,6 @@ public class SonosFilter {
                         System.out.println(getString("r:streamContent", rootElement2));
                         System.out.println(getString("res", rootElement2));
                         System.out.println(getString("title", rootElement2));
-                        tray.showInfo("Song muted: " + getString("title", rootElement2));
                         System.out.println("---");
                     }
                 } catch(Exception e){
@@ -329,10 +328,24 @@ public class SonosFilter {
                     }
                 }*/
                 int volume = getVolume();
+                Document document = loadXMLFromString(result);
+                Element rootElement = document.getDocumentElement();
+                    
                 if(checkFilter(result.toLowerCase())){
+                    if(!equals(getString("TrackMetaData", rootElement).equals("NOT_IMPLEMENTED"))){
+                        Document document2 = loadXMLFromString(getString("TrackMetaData", rootElement));
+                        Element rootElement2 = document2.getDocumentElement();
+                        showInfo("Song muted: " + getString("title", rootElement2));
+                    }
                     volume = 0;
                 }
                 if(checkLouder(result.toLowerCase())){
+                    if(!equals(getString("TrackMetaData", rootElement).equals("NOT_IMPLEMENTED"))){
+                        Document document2 = loadXMLFromString(getString("TrackMetaData", rootElement));
+                        Element rootElement2 = document2.getDocumentElement();
+                        showInfo("Song made louder: " + getString("title", rootElement2));
+                    }
+                    
                     volume = getLoudVolume();
                 }
                 setVolume(volume);
